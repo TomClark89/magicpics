@@ -6,7 +6,7 @@ Several debugging methods are available which can help to
 show you the results of the algorithm.
 """
 
-import Image
+from PIL import Image, ImageDraw
 import random
 import numpy
 
@@ -26,9 +26,9 @@ class Cluster(object):
         G = [colour[1] for colour in self.pixels]
         B = [colour[2] for colour in self.pixels]
 
-        R = sum(R) / len(R)
-        G = sum(G) / len(G)
-        B = sum(B) / len(B)
+        R = int(sum(R) / len(R))
+        G = int(sum(G) / len(G))
+        B = int(sum(B) / len(B))
 
         self.centroid = (R, G, B)
         self.pixels = []
@@ -38,7 +38,7 @@ class Cluster(object):
 
 class Kmeans(object):
 
-    def __init__(self, k=3, max_iterations=5, min_distance=5.0, size=200):
+    def __init__(self, k=4, max_iterations=4, min_distance=5.0, size=200):
         self.k = k
         self.max_iterations = max_iterations
         self.min_distance = min_distance
@@ -47,16 +47,37 @@ class Kmeans(object):
     def run(self, image):
         self.image = image
         self.image.thumbnail(self.size)
-        self.pixels = numpy.array(image.getdata(), dtype=numpy.uint8)
+        self.pixels = numpy.array(list(image.getdata()), dtype=numpy.uint8)
 
         self.clusters = [None for i in range(self.k)]
         self.oldClusters = None
 
-        randomPixels = random.sample(self.pixels, self.k)
+        while True:
+            randomPixels = random.sample(list(self.pixels), self.k)
+            centroid_list = []
+            for idx in range(self.k):
+                self.clusters[idx] = Cluster()
+                self.clusters[idx].centroid = randomPixels[idx]
+                centroid_list.append(randomPixels[idx])
 
-        for idx in range(self.k):
-            self.clusters[idx] = Cluster()
-            self.clusters[idx].centroid = randomPixels[idx]
+            duplicates = False
+            for centroid in centroid_list:
+                count = 0
+                for centroid2 in centroid_list:
+                    if (centroid[0],centroid[1],centroid[2]) == (centroid2[0],centroid2[1],centroid2[2]):
+                        count = count + 1
+                if count > 1:
+                    duplicates = True
+                    break
+
+            if not duplicates:
+                break
+            #else:
+                #print ("duplicate clusters")
+                #for centroid in centroid_list:
+                #    print(centroid)
+
+
 
         iterations = 0
 
@@ -64,10 +85,16 @@ class Kmeans(object):
 
             self.oldClusters = [cluster.centroid for cluster in self.clusters]
 
-            print iterations
-
+            print ("Iterations: " + str(iterations))
             for pixel in self.pixels:
                 self.assignClusters(pixel)
+                # looks like it's messing up here - found it at last!
+                # needs to assign at least one pixel to all
+
+            count = 0
+            for cluster in self.clusters:
+                count = count + 1
+                print ("cluster " + str(count) + ": ",len(cluster.pixels),cluster.centroid)
 
             for cluster in self.clusters:
                 cluster.setNewCentroid()
@@ -83,6 +110,7 @@ class Kmeans(object):
             if distance < shortest:
                 shortest = distance
                 nearest = cluster
+
 
         nearest.addPoint(pixel)
 
@@ -142,19 +170,38 @@ class Kmeans(object):
         colourMap = Image.fromarray(localPixels)
         colourMap.show()
 
+    def showCombinedCentroidColours(self):
+        image = Image.new("RGB",(200, 200*self.k),"white")
+        i = 0
+        for cluster in self.clusters:
+            #print([(0,i * 200),(200,i * 200),(200,200 + i * 200),(0,200 + i * 200)])
+            print("Output:")
+            print(cluster.centroid)
+            ImageDraw.Draw(image).polygon([(0,i * 200),(200,i * 200),(200,200 + i * 200),(0,200 + i * 200)], fill = cluster.centroid)
+        # for cluster in self.clusters:
+        #     for x in range(200):
+        #         for y in range(0 + i * 200, 200 + i * 200):
+        #             #print(x,y)
+        #             image.putpixel((x, y), cluster.centroid)
+            i = i + 1
+        image.show()
+
+
 
 def main():
 
-    image = Image.open("images/cows.jpg")
+    image = Image.open("images\\timessquare.jpg")
 
     k = Kmeans()
 
     result = k.run(image)
-    print result
+    print (result)
 
     k.showImage()
-    k.showCentroidColours()
+    #k.showCentroidColours()
+    k.showCombinedCentroidColours()
     k.showClustering()
+
 
 if __name__ == "__main__":
     main()
