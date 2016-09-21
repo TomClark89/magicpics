@@ -189,7 +189,7 @@ def testForColours(image_path):
         #green is 81 to 140
         #purpley pink is 241 345
     pink_found = False
-    green_found = True
+    green_found = False
     for hsv_colour in hsv_result:
         if 61 <= hsv_colour[0] <= 140:
             #print ("green", hsv_colour[0])
