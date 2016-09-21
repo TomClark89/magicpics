@@ -9,7 +9,7 @@ show you the results of the algorithm.
 from PIL import Image, ImageDraw
 import random
 import numpy
-
+import colorsys
 
 class Cluster(object):
 
@@ -72,10 +72,6 @@ class Kmeans(object):
 
             if not duplicates:
                 break
-            #else:
-                #print ("duplicate clusters")
-                #for centroid in centroid_list:
-                #    print(centroid)
 
 
 
@@ -85,7 +81,7 @@ class Kmeans(object):
 
             self.oldClusters = [cluster.centroid for cluster in self.clusters]
 
-            print ("Iterations: " + str(iterations))
+            #print ("Iterations: " + str(iterations))
             for pixel in self.pixels:
                 self.assignClusters(pixel)
                 # looks like it's messing up here - found it at last!
@@ -94,7 +90,7 @@ class Kmeans(object):
             count = 0
             for cluster in self.clusters:
                 count = count + 1
-                print ("cluster " + str(count) + ": ",len(cluster.pixels),cluster.centroid)
+                #print ("cluster " + str(count) + ": ",len(cluster.pixels),cluster.centroid)
 
             for cluster in self.clusters:
                 cluster.setNewCentroid()
@@ -174,34 +170,55 @@ class Kmeans(object):
         image = Image.new("RGB",(200, 200*self.k),"white")
         i = 0
         for cluster in self.clusters:
-            #print([(0,i * 200),(200,i * 200),(200,200 + i * 200),(0,200 + i * 200)])
-            print("Output:")
-            print(cluster.centroid)
             ImageDraw.Draw(image).polygon([(0,i * 200),(200,i * 200),(200,200 + i * 200),(0,200 + i * 200)], fill = cluster.centroid)
-        # for cluster in self.clusters:
-        #     for x in range(200):
-        #         for y in range(0 + i * 200, 200 + i * 200):
-        #             #print(x,y)
-        #             image.putpixel((x, y), cluster.centroid)
             i = i + 1
         image.show()
 
 
-
-def main():
-
-    image = Image.open("images\\timessquare.jpg")
-
+def testForColours(image_path):
+    image_path = image_path
+    image = Image.open(image_path)
     k = Kmeans()
-
     result = k.run(image)
-    print (result)
+    hsv_result = []
+    for colour in result:
+        hsv_colour = colorsys.rgb_to_hsv(colour[0]/255,colour[1]/255,colour[2]/255)
+        hsv_colour = [int(hsv_colour[0]*360), int(hsv_colour[1]*100), int(hsv_colour[2]*100)]
+        hsv_result.append(hsv_colour)
 
-    k.showImage()
+        #green is 81 to 140
+        #purpley pink is 241 345
+    pink_found = False
+    green_found = True
+    for hsv_colour in hsv_result:
+        if 61 <= hsv_colour[0] <= 140:
+            #print ("green", hsv_colour[0])
+            pink_found = True
+        elif 241 <= hsv_colour[0] <= 345:
+            #print ("pink", hsv_colour[0])
+            green_found = True
+
+    #print(image_path,hsv_result)
+
+    if pink_found and green_found:
+        print(image_path.ljust(60), "|  Found")
+    else:
+        print(image_path.ljust(60), "|  Not found")
+
+    #k.showImage()
     #k.showCentroidColours()
-    k.showCombinedCentroidColours()
-    k.showClustering()
+    #k.showCombinedCentroidColours()
+    #k.showClustering()
 
 
 if __name__ == "__main__":
-    main()
+    testForColours("images\\abstract_purple.jpg")
+    testForColours("images\\DSC_9494.jpg")
+    testForColours("images\\Lenna.png")
+    testForColours("images\\on_a_high.jpg")
+    testForColours("images\\parrots.jpg")
+    testForColours("images\\pathway.jpg")
+    testForColours("images\\rainbow_fence.jpg")
+    testForColours("images\\timessquare.jpg")
+    testForColours("images\\yellow_grey_abstract.jpg")
+    testForColours("images\\flower.jpg")
