@@ -30,7 +30,7 @@ def download_thumbs(url):
 url_front = "http://www.art.co.uk/gallery/id--b1833-h20727"
 url_middle = "/scenic-prints_p"
 url_back = ".htm?" #ui=B8FD8CDA59CD447799729C04971D4606"
-for j in [3]:
+for j in [1,3]:
     for i in range(1, 31):
         url = url_front + str(j) + url_middle + str(i) + url_back
         #print(url)
