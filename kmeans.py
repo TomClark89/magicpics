@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 import random
 import numpy
 import colorsys
+import os
 
 class Cluster(object):
 
@@ -38,7 +39,7 @@ class Cluster(object):
 
 class Kmeans(object):
 
-    def __init__(self, k=4, max_iterations=4, min_distance=5.0, size=200):
+    def __init__(self, k=5, max_iterations=4, min_distance=5.0, size=100):
         self.k = k
         self.max_iterations = max_iterations
         self.min_distance = min_distance
@@ -177,9 +178,16 @@ class Kmeans(object):
 
 def testForColours(image_path):
     image_path = image_path
-    image = Image.open(image_path)
+    try:
+        image = Image.open(image_path)
+    except PermissionError:
+        return "Not found"
     k = Kmeans()
-    result = k.run(image)
+    try:
+        result = k.run(image)
+    except ZeroDivisionError:
+        return "Not found"
+
     hsv_result = []
     for colour in result:
         hsv_colour = colorsys.rgb_to_hsv(colour[0]/255,colour[1]/255,colour[2]/255)
@@ -201,9 +209,10 @@ def testForColours(image_path):
     #print(image_path,hsv_result)
 
     if pink_found and green_found:
-        print(image_path.ljust(60), "|  Found")
+        return "Found"
     else:
-        print(image_path.ljust(60), "|  Not found")
+        return "Not found"
+
 
     #k.showImage()
     #k.showCentroidColours()
@@ -212,13 +221,18 @@ def testForColours(image_path):
 
 
 if __name__ == "__main__":
-    testForColours("images\\abstract_purple.jpg")
-    testForColours("images\\DSC_9494.jpg")
-    testForColours("images\\Lenna.png")
-    testForColours("images\\on_a_high.jpg")
-    testForColours("images\\parrots.jpg")
-    testForColours("images\\pathway.jpg")
-    testForColours("images\\rainbow_fence.jpg")
-    testForColours("images\\timessquare.jpg")
-    testForColours("images\\yellow_grey_abstract.jpg")
-    testForColours("images\\flower.jpg")
+    image_folder = "downloaded_images"
+    max_filename = 0
+    padding = 5
+    for file in os.listdir(image_folder):
+        if not os.path.isdir(os.path.join(image_folder,file)):
+            if len(file) > max_filename:
+                max_filename = len(file)
+    i = 0
+    for file in os.listdir(image_folder):
+        if not os.path.isdir(os.path.join(image_folder,file)):
+            i = i + 1
+            test_results = testForColours(os.path.join(image_folder,file))
+            print(str(i).rjust(3) + ": " + file.ljust(max_filename + padding) + test_results)
+            if test_results == "Found":
+                os.rename(os.path.join(image_folder,file),os.path.join(image_folder,"found",file))
